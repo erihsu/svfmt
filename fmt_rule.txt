@@ -1,2 +1,3 @@
 function fmt: parameter list fmt, 
 interface signal fmt: clock blocking fmt, signal list fmt
+immediate assertion fmt: fmt assert() else into single line
