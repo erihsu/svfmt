@@ -1,0 +1,10 @@
+[package]
+name = "svfmt"
+version = "0.1.0"
+edition = "2021"
+description = "Format SystemVerilog code"
+keywords = ["development","format","SystemVerilog","eda"]
+
+[dependencies]
+sv-parser = "0.11.3"
+
