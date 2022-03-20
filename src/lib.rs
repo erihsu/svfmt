@@ -13,6 +13,9 @@ pub struct FormatStatus<'b> {
     abort_node: bool,
     indent_level: usize,
     current_line_keep_old_indent: bool,
+    handle_port_declare: bool,
+    port_declare_string_len: usize,
+    handle_comment: bool,
 }
 
 impl<'a, 'b> FormatStatus<'a> {
@@ -31,12 +34,15 @@ impl<'a, 'b> FormatStatus<'a> {
             abort_node: false,
             indent_level: 0,
             current_line_keep_old_indent: false,
+            handle_port_declare: false,
+            port_declare_string_len: 0usize,
+            handle_comment: false,
         }
     }
 
     // add code here
     pub fn append<'c>(&mut self, locate: &'c Locate) {
-        if !self.abort_node {
+        if !self.abort_node && !self.handle_comment {
             if locate.line != self.node_locate.line {
                 self.buffer.push_str("\n");
                 if self.current_line_keep_old_indent == true {
@@ -46,18 +52,49 @@ impl<'a, 'b> FormatStatus<'a> {
                 }
             }
             let ongoing_str = self.syntax_tree.get_str(locate).unwrap();
-            self.buffer.push_str(ongoing_str);
+            if self.handle_port_declare {
+                self.port_declare_string_len += locate.len;
+                if ongoing_str == "[" && self.port_declare_string_len != 10usize {
+                    let padding_space = 10usize - self.port_declare_string_len;
+                    (0..padding_space).for_each(|_| self.buffer.push_str(" "));
+                    self.port_declare_string_len += padding_space;
+                    self.buffer.push_str(ongoing_str);
+                } else if ongoing_str == ":" && self.port_declare_string_len != 15usize {
+                    let padding_space = 15usize - self.port_declare_string_len;
+                    (0..padding_space).for_each(|_| self.buffer.push_str(" "));
+                    self.port_declare_string_len += padding_space;
+                    self.buffer.push_str(ongoing_str);
+                } else if ongoing_str == "]" && self.port_declare_string_len != 20usize {
+                    let padding_space = 20usize - self.port_declare_string_len;
+                    (0..padding_space).for_each(|_| self.buffer.push_str(" "));
+                    self.port_declare_string_len += padding_space;
+                    self.buffer.push_str(ongoing_str);
+                } else if ongoing_str == ";" {
+                    self.buffer.push_str(ongoing_str);
+                    self.handle_port_declare = false;
+                    self.port_declare_string_len = 0;
+                } else {
+                    self.buffer.push_str(ongoing_str);
+                }
+            } else {
+                self.buffer.push_str(ongoing_str);
+            }
+
             if self.need_tail_delimiter {
                 self.buffer.push_str(" ");
             }
-
-            // reset status
-            self.node_locate = locate.clone();
-            self.need_tail_newline = false;
-            self.need_tail_delimiter = false;
-            self.tail_indent = None;
-            self.current_line_keep_old_indent = false;
+        } else if self.handle_comment {
+            let ongoing_str = self.syntax_tree.get_str(locate).unwrap();
+            self.buffer.push_str(ongoing_str);
+            self.handle_comment = false;
         }
+
+        // reset status
+        self.node_locate = locate.clone();
+        self.need_tail_newline = false;
+        self.need_tail_delimiter = false;
+        self.tail_indent = None;
+        self.current_line_keep_old_indent = false;
     }
 
     pub fn exec_format(&mut self) {
@@ -66,6 +103,14 @@ impl<'a, 'b> FormatStatus<'a> {
             match node {
                 RefNode::WhiteSpace(_) => {
                     self.abort_node = true;
+                }
+                RefNode::Comment(_) => {
+                    self.handle_comment = true;
+                }
+                RefNode::Symbol(_) => {
+                    if !self.abort_node {
+                        self.handle_port_declare = true;
+                    }
                 }
                 RefNode::Locate(x) => {
                     self.append(x);
@@ -98,6 +143,11 @@ impl<'a, 'b> FormatStatus<'a> {
                     {
                         self.indent_level -= 1;
                         self.current_line_keep_old_indent = false;
+                    } else if ongoing_str == "input"
+                        || ongoing_str == "output"
+                        || ongoing_str == "inout"
+                    {
+                        self.handle_port_declare = true;
                     }
 
                     self.abort_node = false;
