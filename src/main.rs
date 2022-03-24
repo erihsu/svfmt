@@ -5,7 +5,7 @@ use svfmt::FormatStatus;
 fn main() {
     let args: Vec<String> = env::args().collect();
     let path: PathBuf = PathBuf::from(&args[1]);
-    let out: PathBuf = PathBuf::frome(&args[2]);
+    let out: PathBuf = PathBuf::from(&args[2]);
     let defines = HashMap::new();
     let includes: Vec<PathBuf> = Vec::new();
 
