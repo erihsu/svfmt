@@ -107,11 +107,6 @@ impl<'a, 'b> FormatStatus<'a> {
                 RefNode::Comment(_) => {
                     self.handle_comment = true;
                 }
-                RefNode::Symbol(_) => {
-                    if !self.abort_node {
-                        self.handle_port_declare = true;
-                    }
-                }
                 RefNode::Locate(x) => {
                     self.append(x);
                 }

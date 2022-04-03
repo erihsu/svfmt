@@ -1,7 +1,20 @@
-program bac;
+// it's for test
 
-endprogram
+`ifndef ABCD
+`define ABCD
 
-covergroup cg();
+package my_package;
+	import uvm_pkg::*;
+	import internal_pkg::*;
+
+	// include
+	`include "testcase1.sv"
+	`include "testcase2.sv"
+
+	// end of include
+
 	
-endgroup : cg
+endpackage : my_package
+
+
+`endif
