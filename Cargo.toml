@@ -6,6 +6,7 @@ description = "Format SystemVerilog code"
 keywords = ["development","format","SystemVerilog","eda"]
 
 [dependencies]
-sv-parser = {git = "https://gitee.com/xuzhenyu69/sv-parser"}
+sv-parser = {git = "https://gitee.com/xuzhenyu69/sv-parser",rev="82ecd16"}
+# sv-parser = {git = "https://github.com/erihsu/sv-parser"}
 structopt = "0.3"
 

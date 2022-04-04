@@ -8,8 +8,6 @@ package my_package;
 	import internal_pkg::*;
 
 	// include
-	`include "testcase1.sv"
-	`include "testcase2.sv"
 
 	// end of include
 

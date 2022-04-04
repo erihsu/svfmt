@@ -402,7 +402,7 @@ dependencies = [
 [[package]]
 name = "sv-parser"
 version = "0.11.3"
-source = "git+https://gitee.com/xuzhenyu69/sv-parser#9015bb0a95a6843e00e4017023c7ad2f6ea33a91"
+source = "git+https://gitee.com/xuzhenyu69/sv-parser?rev=82ecd16#82ecd16f20f1a9461440c10107855d984125778e"
 dependencies = [
  "nom 6.2.1",
  "nom-greedyerror",
@@ -415,7 +415,7 @@ dependencies = [
 [[package]]
 name = "sv-parser-error"
 version = "0.11.3"
-source = "git+https://gitee.com/xuzhenyu69/sv-parser#9015bb0a95a6843e00e4017023c7ad2f6ea33a91"
+source = "git+https://gitee.com/xuzhenyu69/sv-parser?rev=82ecd16#82ecd16f20f1a9461440c10107855d984125778e"
 dependencies = [
  "thiserror",
 ]
@@ -423,7 +423,7 @@ dependencies = [
 [[package]]
 name = "sv-parser-macros"
 version = "0.11.3"
-source = "git+https://gitee.com/xuzhenyu69/sv-parser#9015bb0a95a6843e00e4017023c7ad2f6ea33a91"
+source = "git+https://gitee.com/xuzhenyu69/sv-parser?rev=82ecd16#82ecd16f20f1a9461440c10107855d984125778e"
 dependencies = [
  "quote",
  "syn",
@@ -432,7 +432,7 @@ dependencies = [
 [[package]]
 name = "sv-parser-parser"
 version = "0.11.3"
-source = "git+https://gitee.com/xuzhenyu69/sv-parser#9015bb0a95a6843e00e4017023c7ad2f6ea33a91"
+source = "git+https://gitee.com/xuzhenyu69/sv-parser?rev=82ecd16#82ecd16f20f1a9461440c10107855d984125778e"
 dependencies = [
  "nom 6.2.1",
  "nom-greedyerror",
@@ -448,7 +448,7 @@ dependencies = [
 [[package]]
 name = "sv-parser-pp"
 version = "0.11.3"
-source = "git+https://gitee.com/xuzhenyu69/sv-parser#9015bb0a95a6843e00e4017023c7ad2f6ea33a91"
+source = "git+https://gitee.com/xuzhenyu69/sv-parser?rev=82ecd16#82ecd16f20f1a9461440c10107855d984125778e"
 dependencies = [
  "nom 6.2.1",
  "nom-greedyerror",
@@ -460,7 +460,7 @@ dependencies = [
 [[package]]
 name = "sv-parser-syntaxtree"
 version = "0.11.3"
-source = "git+https://gitee.com/xuzhenyu69/sv-parser#9015bb0a95a6843e00e4017023c7ad2f6ea33a91"
+source = "git+https://gitee.com/xuzhenyu69/sv-parser?rev=82ecd16#82ecd16f20f1a9461440c10107855d984125778e"
 dependencies = [
  "regex",
  "sv-parser-macros",

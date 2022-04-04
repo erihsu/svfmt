@@ -1,21 +1,33 @@
-use sv_parser::{Locate, RefNode, SyntaxTree};
+use sv_parser::{Locate, RefNode, SyntaxTree,WhiteSpace};
+
+
 
 /// SV format status
 #[derive(Clone)]
 pub struct FormatStatus<'b> {
+    // store the formatted result
     pub buffer: String,
-    need_tail_newline: bool,
     tail_indent: Option<usize>, // append newline and indent in the next line
     // current_node: RefNode<'a>,
     node_locate: Locate,
     pub syntax_tree: &'b SyntaxTree,
+    // insert head space and tail space before and after current Locate's str
     need_tail_delimiter: bool,
+    need_head_delimiter: bool,
+    // RefNode will be aborted when occuring space, 
     abort_node: bool,
+    // indent level will increasement by step when occuring conditional class
     indent_level: usize,
     current_line_keep_old_indent: bool,
+    // when handle port declaration, signal width related will be aligned
     handle_port_declare: bool,
+    handle_symbol: bool,
     port_declare_string_len: usize,
+    // when handle comment, formatting will not be applied
     handle_comment: bool,
+    symbol_in_special_use: bool,
+    
+    
 }
 
 impl<'a, 'b> FormatStatus<'a> {
@@ -23,7 +35,6 @@ impl<'a, 'b> FormatStatus<'a> {
         Self {
             syntax_tree,
             buffer: String::new(),
-            need_tail_newline: false,
             tail_indent: None,
             node_locate: Locate {
                 offset: 0usize,
@@ -31,18 +42,28 @@ impl<'a, 'b> FormatStatus<'a> {
                 len: 0usize,
             },
             need_tail_delimiter: false,
+            need_head_delimiter: false,
             abort_node: false,
             indent_level: 0,
             current_line_keep_old_indent: false,
             handle_port_declare: false,
+            handle_symbol: false,
             port_declare_string_len: 0usize,
             handle_comment: false,
+            symbol_in_special_use: false,
         }
     }
 
     // add code here
     pub fn append<'c>(&mut self, locate: &'c Locate) {
+
+
         if !self.abort_node && !self.handle_comment {
+
+            if self.need_head_delimiter {
+                self.buffer.push_str(" ");
+            }
+
             if locate.line != self.node_locate.line {
                 self.buffer.push_str("\n");
                 if self.current_line_keep_old_indent == true {
@@ -79,7 +100,7 @@ impl<'a, 'b> FormatStatus<'a> {
             } else {
                 self.buffer.push_str(ongoing_str);
             }
-
+            
             if self.need_tail_delimiter {
                 self.buffer.push_str(" ");
             }
@@ -91,8 +112,9 @@ impl<'a, 'b> FormatStatus<'a> {
 
         // reset status
         self.node_locate = locate.clone();
-        self.need_tail_newline = false;
+        // self.need_tail_newline = false;
         self.need_tail_delimiter = false;
+        self.need_head_delimiter = false;
         self.tail_indent = None;
         self.current_line_keep_old_indent = false;
     }
@@ -101,18 +123,68 @@ impl<'a, 'b> FormatStatus<'a> {
         for node in self.syntax_tree {
             // self.current_node = &node;
             match node {
-                RefNode::WhiteSpace(_) => {
+                RefNode::WhiteSpace(x) => {
                     self.abort_node = true;
+                    if let WhiteSpace::Newline(_) = x {
+                        self.abort_node = true;
+                        let whitespace_str = self.syntax_tree.get_str(x).unwrap();
+                        let newline_c = whitespace_str.matches("\n").count();
+                        self.buffer.push_str(&"\n".repeat(newline_c-1));
+                    }
                 }
                 RefNode::Comment(_) => {
                     self.handle_comment = true;
                 }
+                RefNode::Symbol(x) => {
+                    self.handle_symbol = true;
+                    self.abort_node = false;
+                    let ongoing_str = self.syntax_tree.get_str(&x.nodes.0).unwrap();
+                    if !self.symbol_in_special_use {
+                        if ongoing_str == "}" 
+                        || ongoing_str == ")"
+                        || ongoing_str == "]"
+                        {
+                            self.need_tail_delimiter = true;
+                        } else if ongoing_str == ":" && !self.handle_port_declare {
+                            self.need_tail_delimiter = false;
+                        } else if ongoing_str == ";" && !self.need_tail_delimiter {
+                            self.need_head_delimiter = false;                            
+                        }
+                    } else {
+                        if ongoing_str == ";" {
+                            self.symbol_in_special_use = false;
+                        } else {
+                            self.need_head_delimiter = false;
+                            self.need_tail_delimiter = false;
+                        }
+                    }
+
+                }
+                RefNode::Number(_) => {
+                    if self.handle_symbol {
+                        self.need_head_delimiter = true;
+                        self.handle_symbol = false;
+                    }
+                }
                 RefNode::Locate(x) => {
                     self.append(x);
+                }
+                RefNode::PackageImportItemIdentifier(_) => {
+                    self.need_tail_delimiter = false;
+                    self.symbol_in_special_use = true;
                 }
                 RefNode::SimpleIdentifier(x) => {
                     let _ongoing_str = self.syntax_tree.get_str(&x.nodes.0).unwrap();
                     self.need_tail_delimiter = true;
+                    // symbol before indentifier
+                    if self.handle_symbol {
+                        self.need_head_delimiter = true;
+                        self.handle_symbol = false;
+                    }
+
+                    if self.symbol_in_special_use {
+                        self.need_tail_delimiter = false;
+                    }
                 }
                 RefNode::Keyword(x) => {
                     let ongoing_str = self.syntax_tree.get_str(&x.nodes.0).unwrap();
@@ -122,6 +194,7 @@ impl<'a, 'b> FormatStatus<'a> {
                         || ongoing_str == "program"
                         || ongoing_str == "class"
                         || ongoing_str == "function"
+                        || ongoing_str == "package"
                     {
                         self.indent_level += 1;
                         self.current_line_keep_old_indent = true;
@@ -135,6 +208,7 @@ impl<'a, 'b> FormatStatus<'a> {
                         || ongoing_str == "endgroup"
                         || ongoing_str == "endclass"
                         || ongoing_str == "endfunction"
+                        || ongoing_str == "endpackage"
                     {
                         self.indent_level -= 1;
                         self.current_line_keep_old_indent = false;
@@ -147,7 +221,11 @@ impl<'a, 'b> FormatStatus<'a> {
 
                     self.abort_node = false;
                     self.need_tail_delimiter = true;
-                    self.need_tail_newline = false;
+                    // self.need_tail_newline = false;
+                    if self.handle_symbol {
+                        self.need_head_delimiter = true;
+                        self.handle_symbol = false;
+                    }
                 }
 
                 _ => {
@@ -157,16 +235,3 @@ impl<'a, 'b> FormatStatus<'a> {
         }
     }
 }
-
-// fn get_identifier(node: RefNode) -> Option<Locate> {
-//     // unwrap_node! can take multiple types
-//     match unwrap_node!(node, SimpleIdentifier, EscapedIdentifier) {
-//         Some(RefNode::SimpleIdentifier(x)) => {
-//             return Some(x.nodes.0);
-//         }
-//         Some(RefNode::EscapedIdentifier(x)) => {
-//             return Some(x.nodes.0);
-//         }
-//         _ => None,
-//     }
-// }
