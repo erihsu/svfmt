@@ -1,7 +1,6 @@
 use sv_parser::{Locate, RefNode, SyntaxTree,WhiteSpace};
 
 
-
 /// SV format status
 #[derive(Clone)]
 pub struct FormatStatus<'b> {
